@@ -1,0 +1,82 @@
+#! /bin/bash
+
+MY_DIR=$(dirname $0) #Used so that script will work no matter where the script folder is put.
+
+#Changes selected screen  screen by replacing .png in /usr/share/remarkable/
+function replacepng(){
+	echo "choose a file you would like to replace $OLDPNG with:" 
+	cd ~/Pictures/rMscreens
+	select NEWPNG in $(ls *.png)
+	do
+		case $NEWPNG in
+			*) break
+			;;
+		esac
+	done
+	echo "You selected $NEWPNG"
+	echo ""
+	echo "Are you sure you want to change $OLDPNG ?"
+	select CHOICE in yes no
+	do
+		case $CHOICE in
+			yes)
+				scp $NEWPNG root@10.11.99.1:/tmp
+				ssh root@10.11.99.1 /opt/bin/changescrn $OLDPNG /tmp/$NEWPNG #Calls 'changscrn' to replace the old screen with the new one
+				echo "All done!"
+				echo ""
+				ssh root@10.11.99.1 rm /tmp/$NEWPNG #removes orginal .png file from device to save space.
+				mainmenu
+			;;
+			no)
+				mainmenu
+			;;
+			*)
+				echo "Please choose 1 for yes or 2 for no" 
+			;;
+		esac
+	done
+}
+
+#Restore default screens
+function restoredefaults(){
+	echo "Select a screen you'd like to restore to its default"
+	select OLDPNG in batteryempty lowbattery overheating poweroff rebooting recovery splash starting suspended
+	do
+		scp ~/Pictures/rMscreens/$OLDPNG.png root@10.11.99.1:/tmp
+		echo "Copied file to rM"
+		ssh root@10.11.99.1 /opt/bin/changescrn $OLDPNG /tmp/$OLDPNG.png
+		echo "restored $OLDPNG screen to default"
+		echo ""
+		mainmenu
+	done 
+	
+}
+
+#Main menu
+function mainmenu(){
+echo "Choose the screen you would like to replace or quit:"
+select OLDPNG in batteryempty lowbattery overheating poweroff rebooting recovery splash starting suspended Restore_Defaults Quit
+do
+	case $OLDPNG in
+		Restore_Defaults)
+			restoredefaults
+		;;
+		Quit)
+			exit
+		;;
+		batteryempty | lowbattery  | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
+		echo "You chose $OLDPNG"
+		echo ""
+		replacepng
+		;;	
+		*)
+			echo "Please choose from available options"
+			mainmenu
+		;;
+	esac
+done 
+}
+
+
+#MAIN SCRIPT STARTS HERE
+mainmenu

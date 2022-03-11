@@ -1,0 +1,42 @@
+#! /bin/bash
+
+#Arguments
+OLDPNG=$1 #name of screen you'd like to change.  Screen names are default names without the .png
+NEWPNG=$2 #path/to new .png file
+
+#Replace the old screen with the new png you specify.  Each option is the name of the default png file.
+
+	case $OLDPNG in
+		batteryempty)
+			cp $NEWPNG /usr/share/remarkable/batteryempty.png
+		;;
+		lowbattery)
+			cp $NEWPNG /usr/share/remarkable/lowbattery.png
+		;;
+		overheating)
+			cp $NEWPNG /usr/share/remarkable/overheating.png
+		;;
+		poweroff)
+			cp $NEWPNG /usr/share/remarkable/poweroff.png
+		;;
+		rebooting)
+			cp $NEWPNG /usr/share/remarkable/rebooting.png
+		;;
+		recovery)
+			cp $NEWPNG /usr/share/remarkable/recovery.png
+		;;
+		splash)
+			cp $NEWPNG /usr/share/remarkable/splash.png
+		;;
+		starting)
+			cp $NEWPNG /usr/share/remarkable/starting.png	
+		;;
+		suspended)
+			cp $NEWPNG /usr/share/remarkable/suspended.png
+		;;
+		*)
+			echo "Usage: changescrn [Screen Options] [New .png location]"
+			echo "Screen Options: mv batteryempty lowbattery overheating poweroff rebooting recovery splash starting suspended"
+		;;
+	esac
+
