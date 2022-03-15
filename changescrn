@@ -1,11 +1,9 @@
 #! /bin/bash
 
-#Arguments
-OLDPNG=$1 #name of screen you'd like to change.  Screen names are default names without the .png
-NEWPNG=$2 #path/to new .png file
-
-
-
+#Backup existing screens: changescr -b
+#Change Screen: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]
+#Restore original screens: changescrn -r [SCREEN] (use option 'all' to restore all screens at once)
+#[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended 
 
 while getopts "r: c: n: :b" opt; do
 	case $opt in
