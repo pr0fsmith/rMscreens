@@ -1,12 +1,12 @@
 #! /bin/bash
 
-#Backup existing screens: changescr -b
+#Backup existing screens: changescrn -b
 #Change Screen: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]
 #Restore original screens: changescrn -r [SCREEN] (use option 'all' to restore all screens at once)
 #[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended 
 
-backup="/opt/usr/share/backupscrns"
-source="/usr/share/remarkable"
+BACKUP="/opt/usr/share/backupscrns"
+SOURCE="/usr/share/remarkable"
 
 while getopts "r: c: n: :b" opt; do
 	case $opt in
@@ -14,12 +14,12 @@ while getopts "r: c: n: :b" opt; do
 			case $OPTARG in 
 				batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
 					echo "restoring $OPTARG.png..."
-					cp $backup/$OPTARG.png $source >&2
+					cp $BACKUP/$OPTARG.png $SOURCE >&2
 					echo "Done!"
 					;;
 				all)
 					echo "Restoring all screens..."
-					cp $backup/*.png $source
+					cp $BACKUP/*.png $SOURCE
 					echo "Done!"
 					;;
 				*)
@@ -53,8 +53,8 @@ while getopts "r: c: n: :b" opt; do
     	   
 		   ;;	
 		b) #Creates a backup of original screens
-			mkdir -p $backup
-			cp $source/*.png $backup/
+			mkdir -p $BACKUP
+			cp $source/*.png $BACKUP/
 		   ;;
 		\?)
 			echo "Invalid option: -$OPTARG" >&2
@@ -65,10 +65,14 @@ while getopts "r: c: n: :b" opt; do
 			echo "Usage: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]"
 			exit 1
 			;;
+		h)
+			echo "Change Screen: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]"
+    	     		echo "Backup existing screens: changescrn -b"
+			echo "Restore original screens: changescrn -r [SCREEN] (use option 'all' to restore all screens at once)"
+			echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
+			exit 1
+			;;
 	esac
 
 	
 done
-
-
-
