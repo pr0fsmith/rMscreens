@@ -8,13 +8,13 @@
 BACKUP="/opt/usr/share/backupscrns"
 SOURCE="/usr/share/remarkable"
 
-while getopts "r: c: n: :b" opt; do
+while getopts ":r :c :b :h" opt; do
 	case $opt in
 		r) #Restores original screen
-			case $OPTARG in 
+			case $2 in 
 				batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
-					echo "restoring $OPTARG.png..."
-					cp $BACKUP/$OPTARG.png $SOURCE >&2
+					echo "restoring $2.png..."
+					cp $BACKUP/$2.png $SOURCE >&2
 					echo "Done!"
 					;;
 				all)
@@ -23,50 +23,52 @@ while getopts "r: c: n: :b" opt; do
 					echo "Done!"
 					;;
 				*)
-					echo "Screen Options: batteryempty lowbattery overheating poweroff rebooting recovery splash starting suspended"
+					echo "Screen Options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended | all"
 					exit 1
 					;;
 			esac	
 			;;
 
-		c) #Specifies which screen to change. Must be used in combination with -n
-			SCREEN=$OPTARG
-		   case $NEWSCRN in 
-		   		"") echo "Please specify location of new screen" 
-					echo "Usage: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]"
+		c) #Changes screen
+			
+			case $2 in 
+				batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
+					case $3 in
+						*)
+							cp $3 $SOURCE/$2.png
+							echo "$2 screen replaced"
+							;;
+						"") 
+							echo "Usage: changescrn -c [SCREEN] [PATH TO NEW SCREEN]"
+							echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
+							;;
+					esac
+					;;
+		   		"")
+					echo "Usage: changescrn -c [SCREEN] [PATH TO NEW SCREEN]"
+					echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
 					;;
 			esac
 		   ;;
-
-		n) #Specifies location of new screen.  Must be used in combination with -c
-			NEWSCRN=$OPTARG
-		   case $SCREEN in 
-		   		batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
-				cp $NEWSCRN $source/$SCREEN.png
-				;;
-    	     	*)
-    	     	echo "You either didn't specify a screen option first or didn't specify a correct screen option"
-    	     	echo "Usage: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]"
-    	     	echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
-    	     	;;
-    	     esac
     	   
-		   ;;	
 		b) #Creates a backup of original screens
 			mkdir -p $BACKUP
-			cp $source/*.png $BACKUP/
+			cp $SOURCE/*.png $BACKUP/
+			echo "Backup complete"
 		   ;;
 		\?)
-			echo "Invalid option: -$OPTARG" >&2
+			echo "Invalid option: -$OPTARG, 'changescrn -h' for usage" >&2
 			exit 1
 			;;
-		:)
-			echo "Option -$OPTARG requires and argument." >&2
-			echo "Usage: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]"
+		*)
+			echo "'changescrn -h' for useage"
 			exit 1
+			;;
+		"")
+			echo "Requires argument. 'changescrn -h' for usage" >&2
 			;;
 		h)
-			echo "Change Screen: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]"
+			echo "Change Screen: changescrn -c [SCREEN] [PATH TO NEW SCREEN]"
     	     		echo "Backup existing screens: changescrn -b"
 			echo "Restore original screens: changescrn -r [SCREEN] (use option 'all' to restore all screens at once)"
 			echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
