@@ -1,80 +1,138 @@
-#! /bin/bash
-
-#Backup existing screens: changescrn -b
-#Change Screen: changescrn -c [SCREEN] -n [PATH TO NEW SCREEN]
-#Restore original screens: changescrn -r [SCREEN] (use option 'all' to restore all screens at once)
-#[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended 
+#!/bin/bash
 
 BACKUP="/opt/usr/share/backupscrns"
 SOURCE="/usr/share/remarkable"
 
-while getopts ":r :c :b :h" opt; do
-	case $opt in
-		r) #Restores original screen
-			case $2 in 
-				batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
-					echo "restoring $2.png..."
-					cp $BACKUP/$2.png $SOURCE >&2
-					echo "Done!"
-					;;
-				all)
-					echo "Restoring all screens..."
-					cp $BACKUP/*.png $SOURCE
-					echo "Done!"
-					;;
-				*)
-					echo "Screen Options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended | all"
-					exit 1
-					;;
-			esac	
-			;;
 
-		c) #Changes screen
-			
-			case $2 in 
-				batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
-					case $3 in
-						*)
-							cp $3 $SOURCE/$2.png
-							echo "$2 screen replaced"
-							;;
-						"") 
-							echo "Usage: changescrn -c [SCREEN] [PATH TO NEW SCREEN]"
-							echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
-							;;
-					esac
-					;;
-		   		"")
-					echo "Usage: changescrn -c [SCREEN] [PATH TO NEW SCREEN]"
-					echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
-					;;
-			esac
-		   ;;
-    	   
-		b) #Creates a backup of original screens
-			mkdir -p $BACKUP
-			cp $SOURCE/*.png $BACKUP/
-			echo "Backup complete"
-		   ;;
-		\?)
-			echo "Invalid option: -$OPTARG, 'changescrn -h' for usage" >&2
-			exit 1
-			;;
-		*)
-			echo "'changescrn -h' for useage"
-			exit 1
-			;;
-		"")
-			echo "Requires argument. 'changescrn -h' for usage" >&2
-			;;
-		h)
-			echo "Change Screen: changescrn -c [SCREEN] [PATH TO NEW SCREEN]"
-    	     		echo "Backup existing screens: changescrn -b"
-			echo "Restore original screens: changescrn -r [SCREEN] (use option 'all' to restore all screens at once)"
-			echo "[SCREEN] options: batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended"
-			exit 1
-			;;
-	esac
+usage(){
+    echo "changescrn [-b] [-r <screen>|all] [-c <screen> <image-path>]"
+    echo "  -b Backup current screens"
+    echo "  -r Restore a screen, or all screens from the last backup"
+    echo "  -c Change a specific screen"
+    echo ""
+    echo "  Valid options for screen:"
+    echo "    batteryempty lowbattery overheating poweroff rebooting"
+    echo "    recovery splash starting suspended"
+}
 
-	
-done
+valid(){
+    case $1 in
+        batteryempty | lowbattery | overheating | poweroff | rebooting | recovery | splash | starting | suspended)
+            return 0
+        ;;
+    esac
+    return 1
+}
+
+main(){
+    local r=
+    local c=
+    local b=0
+    while getopts "r:c:bh" opt; do
+        case $opt in
+            r)
+                if [[ -z "$OPTARG" ]];then
+                    echo "Screen missing" >&2
+                    usage
+                    exit 1
+                elif [[ "$OPTARG" != "all" ]] && ! valid "$OPTARG";then
+                    echo "Unknown screen: $OPTARG" >&2
+                    usage
+                    exit 1
+                fi
+                r="$OPTARG"
+                ;;
+            c)
+                if [[ -z "$OPTARG" ]];then
+                    echo "Screen missing" >&2
+                    usage
+                    exit 1
+                elif ! valid "$OPTARG";then
+                    echo "Unknown screen: $OPTARG" >&2
+                    usage
+                    exit 1
+                fi
+                c="$OPTARG"
+                ;;
+            b) b=1 ;;
+            \?)
+                echo "Invalid option: -$OPTARG" >&2
+                usage
+                exit 1
+                ;;
+            *)
+                echo "Unknown option: -$opt" >&2
+                usage
+                exit 1
+                ;;
+            "")
+                echo "Requires argument." >&2
+                usage
+                exit 1
+                ;;
+            h)
+                usage
+                exit
+                ;;
+        esac
+    done
+    shift $(( OPTIND - 1 ))
+    if [ $b -eq 1 ] && [[ ! -z "${r}" ]];then
+        echo "You cannot specify -b and -r at the same time." >&2
+        usage
+        exit 1
+    fi
+    if [ $b -eq 1 ] && [[ ! -z "${c}" ]];then
+        echo "You cannot specify -b and -c at the same time." >&2
+        usage
+        exit 1
+    fi
+    if [[ ! -z "${r}" ]] && [[ ! -z "${c}" ]];then
+        echo "You cannot specify -r and -c at the same time." >&2
+        usage
+        exit 1
+    fi
+    if [ $b -eq 1 ];then
+        if [ "$#" -ne 0 ];then
+            echo "Unknown extra argument." >&2
+            usage
+            exit 1
+        fi
+        mkdir -p "$BACKUP"
+        cp "$SOURCE"/{batteryempty,lowbattery,overheating,poweroff,rebooting,recovery,splash,starting,suspended}.png "$BACKUP"/
+        echo "Backup complete"
+    elif [[ ! -z "${c}" ]];then
+        if [ "$#" -eq 0 ];then
+            echo "Path to image missing." >&2
+            usage
+            exit 1
+        elif [ "$#" -gt 1 ];then
+            echo "Unknown extra argument." >&2
+            usage
+            exit 1
+        elif [ ! -f "$1" ];then
+            echo "File missing: $1" >&2
+            exit 1
+        fi
+        cp "$1" "$SOURCE"/"$c".png
+        echo "$c screen replaced"
+    elif [[ ! -z "${r}" ]];then
+        if [[ "$r" == "all" ]];then
+            echo "Restoring all screens..."
+            cp "$BACKUP"/{batteryempty,lowbattery,overheating,poweroff,rebooting,recovery,splash,starting,suspended}.png "$SOURCE"/
+        elif [ ! -f "$BACKUP"/"$r".png ];then
+            echo "Backup for $r doesn't exist." >&2
+            exit 1
+        else
+            echo "restoring $r.png..."
+            cp "$BACKUP"/"$r".png "$SOURCE"/
+        fi
+        echo "Done!"
+    else
+        echo "No options specified" >&2
+        usage
+        exit 1
+    fi
+}
+
+main "$@"
